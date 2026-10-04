@@ -29,7 +29,7 @@ Main change from the original TPC-DS table definition:
 TIME -> VARCHAR2(8)
 ```
 TIME format didn't work for me in Oracle so I change it to VARCHAR
-
+ 
 
 ## 4. Load the `.dat` files into Oracle
 

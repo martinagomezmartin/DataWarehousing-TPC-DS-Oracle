@@ -64,3 +64,14 @@ Docs/        -> setup/generation documentation
 scripts/     -> Python data-loading script
 queries/     -> generated Oracle SQL queries
 ```
+
+
+## Changes in Quries
+Date Type. 
+with CAST Oracle is trying to convert a string to a date using a format that doesn’t match the string instead use racle’s format-independent date literal:
+```
+CAST('1998-08-04' AS DATE) -> DATE '1998-08-04'
+
+CAST('1998-08-04' AS DATE) + 14 ->
+DATE '1998-08-04' + 14
+```

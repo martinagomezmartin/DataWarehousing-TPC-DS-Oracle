@@ -75,3 +75,10 @@ CAST('1998-08-04' AS DATE) -> DATE '1998-08-04'
 CAST(('1998-08-04' AS DATE) + 14 days )->
 DATE '1998-08-04' + 14
 ```
+
+```
+cast(d_date as date) -> (d_date)
+```
+
+
+In queries 14, 21, 24 there were to separate queries I have splitted into 2 sub-queries

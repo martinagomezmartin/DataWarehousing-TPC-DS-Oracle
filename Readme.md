@@ -72,6 +72,6 @@ with CAST Oracle is trying to convert a string to a date using a format that doe
 ```
 CAST('1998-08-04' AS DATE) -> DATE '1998-08-04'
 
-CAST('1998-08-04' AS DATE) + 14 ->
+CAST(('1998-08-04' AS DATE) + 14 days )->
 DATE '1998-08-04' + 14
 ```

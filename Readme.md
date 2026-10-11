@@ -96,6 +96,11 @@ d_date = '1998-02-19' -> d_date = DATE '1998-02-19'
 Queries 40, 58, 77 and 80 were fixed with these rules. Query 69 needed no change.
 Queries 50 to 75 all run successfully on SF=1.
 
+### Changes by Imad  (queries 32, 37, 39 and tests 25 to 50)
+
+Queries 32 and 37: `CAST('...' AS DATE) + N days` -> `DATE '...' + N`. Query 39 contained 2 queries, split into `query39.1.sql` and `query39.2.sql`.
+Queries 25 to 50 all run successfully on SF=1.
+
 ## Gather statistics after loading (Amine)
 
 After loading the data, run:

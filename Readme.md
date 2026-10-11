@@ -81,4 +81,4 @@ cast(d_date as date) -> (d_date)
 ```
 
 
-In queries 14, 21, 24 there were to separate queries I have splitted into 2 sub-queries
+In queries 14, 21, 24 did not work, there were 2 separate queries I have splitted into 2 sub-queries

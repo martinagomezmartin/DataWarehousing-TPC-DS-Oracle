@@ -1,4 +1,3 @@
-
 select * from (select  
   cd_gender,
   cd_marital_status,

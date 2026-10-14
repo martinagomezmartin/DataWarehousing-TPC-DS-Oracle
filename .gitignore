@@ -3,3 +3,5 @@ tpcds-data.nosync/
 tpcds-data/
 .DS_Store
 commandes.txt
+tpcds/
+__pycache__

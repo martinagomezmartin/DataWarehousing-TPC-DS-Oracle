@@ -111,3 +111,31 @@ END;
 
 Without statistics, the optimizer picks bad execution plans.
 Example: query 69 took about 440 s without statistics and 0.41 s with them.
+
+
+# TPC-DS Query Benchmark
+
+### Setup
+Run from the DataWarehousing-TPC-DS-Oracle/ directory :
+```bash
+export ORACLE_USER=TPCDS
+export ORACLE_DSN=localhost:1521/FREEPDB1
+read ORACLE_PASSWORD
+export ORACLE_PASSWORD
+
+# Dependencies (install once)
+pip install oracledb sqlparse
+chmod +x run_benchmark.sh
+```
+
+### Run Benchmark
+
+```bash
+./run_benchmark.sh 1 0      # Power Test
+./run_benchmark.sh 1 1 4    # Throughput Test 1
+./run_benchmark.sh 1 5 8    # Throughput Test 2
+```
+
+- First argument: Scale
+- Other arguments: stream range
+- Output: `results/SF1/` (CSV files per stream)

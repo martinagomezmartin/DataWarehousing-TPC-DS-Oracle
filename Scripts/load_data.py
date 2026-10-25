@@ -269,6 +269,24 @@ def load_file(connection, file_path, batch_size):
 
     return total_rows
 
+def create_tables(connection):
+    path = os.path.join(os.path.dirname(__file__), "tpcds_oracle.sql")
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM user_tables")
+
+        if cursor.fetchone()[0] != 0:
+            raise RuntimeError("The database already contains tables")
+
+        with open(path, encoding="utf-8") as sql_file:
+            sql = "".join(
+                line for line in sql_file
+                if not line.lstrip().startswith("--")
+            )
+
+        for statement in sql.split(";"):
+            if statement.strip():
+                cursor.execute(statement.strip())
 
 def main():
 
@@ -320,6 +338,11 @@ def main():
         help="Truncate each table before loading"
     )
 
+    parser.add_argument(
+        "--create-tables",
+        action="store_true"
+    )
+    
     args = parser.parse_args()
 
     # ------------------------------------------------------------
@@ -396,6 +419,10 @@ def main():
 
     try:
 
+        #creating the tables
+        if args.create_tables:
+            create_tables(connection)
+            
         for file_path in files:
 
             table_name = os.path.splitext(

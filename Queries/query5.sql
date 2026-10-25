@@ -1,4 +1,3 @@
-
 with ssr as
  (select s_store_id,
         sum(sales_price) as sales,
@@ -26,7 +25,7 @@ with ssr as
      store
  where date_sk = d_date_sk
        and d_date between DATE '1998-08-04' 
-                  and (DATE '1998-08-04' + 14 )
+                  and (DATE '1998-08-04' +  14 )
        and store_sk = s_store_sk
  group by s_store_id)
  ,
@@ -57,7 +56,7 @@ with ssr as
      catalog_page
  where date_sk = d_date_sk
        and d_date between DATE '1998-08-04' 
-                  and (DATE '1998-08-04'+  14)
+                  and (DATE'1998-08-04'  +  14 )
        and page_sk = cp_catalog_page_sk
  group by cp_catalog_page_id)
  ,
@@ -89,8 +88,8 @@ with ssr as
      date_dim,
      web_site
  where date_sk = d_date_sk
-       and d_date between DATE '1998-08-04'
-                  and (DATE '1998-08-04' +  14 )
+       and d_date between DATE '1998-08-04' 
+                  and (DATE '1998-08-04'  +  14 )
        and wsr_web_site_sk = web_site_sk
  group by web_site_id)
  select * from ( select  channel
@@ -123,6 +122,6 @@ with ssr as
  group by rollup (channel, id)
  order by channel
          ,id
-  ) where rownum <= 100
+  ) where rownum <= 100;
 
 

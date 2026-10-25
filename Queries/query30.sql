@@ -1,4 +1,3 @@
-
 with customer_total_return as
  (select wr_returning_customer_sk as ctr_customer_sk
         ,ca_state as ctr_state, 
@@ -13,7 +12,7 @@ with customer_total_return as
          ,ca_state)
  select * from ( select  c_customer_id,c_salutation,c_first_name,c_last_name,c_preferred_cust_flag
        ,c_birth_day,c_birth_month,c_birth_year,c_birth_country,c_login,c_email_address
-       ,c_last_review_date_sk,ctr_total_return
+       ,c_last_review_date,ctr_total_return --c_last_review_date_sk (does not exist removed the _sk)
  from customer_total_return ctr1
      ,customer_address
      ,customer
@@ -25,7 +24,7 @@ with customer_total_return as
        and ctr1.ctr_customer_sk = c_customer_sk
  order by c_customer_id,c_salutation,c_first_name,c_last_name,c_preferred_cust_flag
                   ,c_birth_day,c_birth_month,c_birth_year,c_birth_country,c_login,c_email_address
-                  ,c_last_review_date_sk,ctr_total_return
+                  ,c_last_review_date,ctr_total_return
  ) where rownum <= 100;
 
 

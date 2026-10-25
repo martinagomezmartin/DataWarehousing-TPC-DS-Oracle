@@ -2,6 +2,7 @@ tpcds-data.nosync/
 .DS_Store
 tpcds-data/
 .DS_Store
+.env
 commandes.txt
 tpcds/
 __pycache__

@@ -51,6 +51,7 @@
 --         ,c_first_name
 --         ,s_store_name
 -- ;
+
 with ssales as
 (select c_last_name
       ,c_first_name
@@ -101,6 +102,7 @@ having sum(netpaid) > (select 0.05*avg(netpaid)
                            from ssales)
 order by c_last_name
         ,c_first_name
-        ,s_store_name;
+        ,s_store_name
+;
 
 

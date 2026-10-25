@@ -18,7 +18,7 @@ where i_category in ('Books'))
  and     d_year                  = 1999
  and     d_moy                   = 3
  and     ss_addr_sk              = ca_address_sk
- and     ca_gmt_offset           = -6 
+ and     ca_gmt_offset           = -5 
  group by i_manufact_id),
  cs as (
  select
@@ -39,7 +39,7 @@ where i_category in ('Books'))
  and     d_year                  = 1999
  and     d_moy                   = 3
  and     cs_bill_addr_sk         = ca_address_sk
- and     ca_gmt_offset           = -6 
+ and     ca_gmt_offset           = -5 
  group by i_manufact_id),
  ws as (
  select
@@ -60,7 +60,7 @@ where i_category in ('Books'))
  and     d_year                  = 1999
  and     d_moy                   = 3
  and     ws_bill_addr_sk         = ca_address_sk
- and     ca_gmt_offset           = -6
+ and     ca_gmt_offset           = -5
  group by i_manufact_id)
  select * from ( select  i_manufact_id ,sum(total_sales) total_sales
  from  (select * from ss 

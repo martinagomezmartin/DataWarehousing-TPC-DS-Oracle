@@ -9,14 +9,14 @@ from
   ,customer_address
   ,call_center
 where
-    d_date between DATE '1999-4-01' and 
-           (DATE '1999-4-01' + 60 )
+    d_date between DATE '1999-2-01' and 
+           (DATE '1999-2-01'  + 60 )
 and cs1.cs_ship_date_sk = d_date_sk
 and cs1.cs_ship_addr_sk = ca_address_sk
-and ca_state = 'GA'
+and ca_state = 'IL'
 and cs1.cs_call_center_sk = cc_call_center_sk
-and cc_county in ('Daviess County','Franklin Parish','Barrow County','Luce County',
-                  'Fairfield County'
+and cc_county in ('Williamson County','Williamson County','Williamson County','Williamson County',
+                  'Williamson County'
 )
 and exists (select *
             from catalog_sales cs2

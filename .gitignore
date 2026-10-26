@@ -1,8 +1,16 @@
-tpcds-data.nosync/
-.DS_Store
-tpcds-data/
-.DS_Store
+# Local Oracle settings (template: .env.example)
 .env
-commandes.txt
+
+# TPC-DS kit and generated data (rebuilt with ./tpcds.sh build / generate)
 tpcds/
-__pycache__
+tpcds-data/
+tpcds-data.nosync/
+
+# Benchmark runs (copy the final ones to Report/results/)
+results/
+
+# Python / macOS / personal notes
+.venv/
+__pycache__/
+.DS_Store
+commandes.txt

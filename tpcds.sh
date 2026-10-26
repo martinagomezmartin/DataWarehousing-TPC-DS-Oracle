@@ -13,7 +13,7 @@ Usage: ./tpcds.sh <command> [arguments]
 
 Preparation
   build                      compile dsdgen and dsqgen (TPC-DS kit in TPCDS_TOOLS)
-  generate SF                dsdgen: base data sf<SF> + refresh data sets 1-4 (not timed)
+  generate SF [SF ...]       dsdgen: base data sf<SF> + refresh data sets 1-4 (not timed)
   validate                   compare the 99 qualification queries with the official answer sets (SF1)
 
 Benchmark (spec 7.4.2: load, power, throughput 1, dm 1, throughput 2, dm 2)
@@ -21,7 +21,8 @@ Benchmark (spec 7.4.2: load, power, throughput 1, dm 1, throughput 2, dm 2)
   power SF                   Power Test, stream 0                                      -> T_Power
   throughput SF 1|2          Throughput Test 1 (streams 1-4) or 2 (streams 5-8)        -> T_TT1 / T_TT2
   dm SF 1|2 [--rollback]     Data Maintenance Test 1 (refresh runs 1-2) or 2 (3-4)     -> T_DM1 / T_DM2
-  all SF                     the six tests above, in order
+  all SF [SF ...]            the six tests above, in order, for each scale factor, then metrics
+  metrics                    T_* and QphDS@SF of the latest complete run of each SF -> results/metrics.csv
   dm-setup                   recreate the data maintenance staging tables and views
 
 Results: results/SF<SF>/<date>_<test>/
@@ -121,6 +122,10 @@ cmd_generate() {
     )
 }
 
+cmd_metrics() {
+    "$PYTHON" "$SF_DIR/Clause7/compute_metrics.py" results
+}
+
 cmd_validate() {
     "$PYTHON" "$SF_DIR/Clause4/check_queries.py" \
         --query-dir "$SF_DIR/Clause4/queries_archive/qualification" \
@@ -206,15 +211,24 @@ cmd_dm() {
 }
 
 cmd_all() {
-    # Spec 7.4.2, without restarting the database in between (7.4.1.3)
-    local sf="$1"
+    # Spec 7.4.2 for each scale factor, without restarting the database in between (7.4.1.3)
+    local sf
+    for sf in "$@"; do
+        check_scale "$sf"
+        [[ -d "$DATA_DIR/sf$sf" && -d "$DATA_DIR/sf${sf}_update" ]] \
+            || die "no data for SF$sf, run './tpcds.sh generate $sf'"
+    done
     confirm_drop
-    ASSUME_YES=1 cmd_load "$sf"
-    cmd_power "$sf"
-    cmd_throughput "$sf" 1
-    cmd_dm "$sf" 1
-    cmd_throughput "$sf" 2
-    cmd_dm "$sf" 2
+    for sf in "$@"; do
+        echo "===== Scale factor $sf ====="
+        ASSUME_YES=1 cmd_load "$sf"
+        cmd_power "$sf"
+        cmd_throughput "$sf" 1
+        cmd_dm "$sf" 1
+        cmd_throughput "$sf" 2
+        cmd_dm "$sf" 2
+    done
+    cmd_metrics
 }
 
 
@@ -222,14 +236,16 @@ command="${1:-}"
 shift || true
 case "$command" in
     build)      cmd_build ;;
-    generate)   check_scale "${1:-}"; cmd_generate "$1" ;;
+    generate)   [[ $# -gt 0 ]] || die "give at least one scale factor"
+                for sf in "$@"; do check_scale "$sf"; cmd_generate "$sf"; done ;;
     validate)   cmd_validate ;;
     dm-setup)   cmd_dm_setup ;;
     load)       check_scale "${1:-}"; cmd_load "$1" ;;
     power)      check_scale "${1:-}"; cmd_power "$1" ;;
     throughput) check_scale "${1:-}"; cmd_throughput "$1" "${2:-}" ;;
     dm)         check_scale "${1:-}"; cmd_dm "$@" ;;
-    all)        check_scale "${1:-}"; cmd_all "$1" ;;
+    all)        [[ $# -gt 0 ]] || die "give at least one scale factor"; cmd_all "$@" ;;
+    metrics)    cmd_metrics ;;
     ""|-h|--help|help) usage ;;
     *)          usage >&2; exit 1 ;;
 esac

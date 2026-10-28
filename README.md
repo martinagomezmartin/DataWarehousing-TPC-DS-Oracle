@@ -25,9 +25,10 @@ Load Test -> Power Test -> Throughput Test 1 -> Data Maintenance 1 -> Throughput
 
 ```bash
 ./tpcds.sh build                 # compile dsdgen / dsqgen
-./tpcds.sh generate 1 2 3 6      # data for every scale factor
-./tpcds.sh all 1 2 3 6           # full benchmark for every scale factor + metrics
+./tpcds.sh generate 1 2 3 5      # data for every scale factor
+./tpcds.sh all 1 2 3 5           # full benchmark for every scale factor + metrics
 ./tpcds.sh metrics               # QphDS@SF table (results/metrics.csv)
+./tpcds.sh report                # tables + figures in Report/results/
 ```
 
 ---
@@ -96,7 +97,7 @@ Every command is run from the project root, with the virtual environment active.
 
 ```bash
 ./tpcds.sh build             # compile dsdgen and dsqgen (macOS headers are handled)
-./tpcds.sh generate 1 2 3 6  # base data + refresh data sets 1-4 for each scale factor
+./tpcds.sh generate 1 2 3 5  # base data + refresh data sets 1-4 for each scale factor
 ./tpcds.sh validate          # 99 qualification queries vs the official answer sets (load SF1 first)
 ```
 
@@ -105,7 +106,7 @@ Every command is run from the project root, with the virtual environment active.
 ### 3.2 Full benchmark for all scale factors (one command)
 
 ```bash
-./tpcds.sh all 1 2 3 6
+./tpcds.sh all 1 2 3 5
 ```
 
 For each scale factor, in turn, `all` runs the sequence of clause 7.4.2:
@@ -146,7 +147,30 @@ computes the times and QphDS@SF (clause 7.6.3). Output, also written to `results
 | T_TT1, T_TT2 | first query of the first stream to the last answer of the last stream | 7.4.7 |
 | T_DM1, T_DM2 | start of the first refresh run to the end of the last one | 7.4.9 |
 
-### 3.4 Individual tests
+### 3.4 Final report and figures
+
+```bash
+./tpcds.sh report
+```
+
+`SupportingFiles/Clause7/benchmark_report.py` uses the same runs as `metrics` and writes in
+`Report/results/`:
+
+| File | Content |
+|---|---|
+| `report.md` | times and QphDS@SF per scale factor, scaling relative to SF1, T_TT / T_Power, query profiles, 10 slowest Power Test queries |
+| `times_by_sf.png` | the six times as a function of the scale factor, with a linear reference |
+| `qphds_by_sf.png` | QphDS@SF per scale factor |
+| `throughput_vs_power.png` | T_TT1 / T_Power and T_TT2 / T_Power, against 1 (streams fully in parallel), 2 and 4 (streams one after the other) |
+| `power_queries.png` | slowest Power Test queries at the largest scale factor, for every scale factor (log scale) |
+| `query_profiles.png` | Power Test time by scale factor of linear, superlinear and erratic queries (classification in `report.md`) |
+| `query_distribution.png` | distribution of the 99 Power Test query times per scale factor (box plot, log scale) |
+| `dm_phases.png` | data maintenance split into load, deletes, inserts and commit |
+| `summary.csv`, `power_queries.csv`, `raw/` | data behind the tables and figures, raw CSV of the runs |
+
+A scale factor without a complete run is skipped.
+
+### 3.5 Individual tests
 
 ```bash
 ./tpcds.sh load 1            # drop the schema, create tables, load sf1, gather statistics -> T_Load
@@ -156,6 +180,7 @@ computes the times and QphDS@SF (clause 7.6.3). Output, also written to `results
 ./tpcds.sh throughput 1 2    # Throughput Test 2, streams 5-8 in parallel                -> T_TT2
 ./tpcds.sh dm 1 2            # Data Maintenance Test 2, refresh runs 3-4                 -> T_DM2
 ./tpcds.sh metrics           # T_Load ... T_DM2 and QphDS@SF for every scale factor
+./tpcds.sh report            # final report and figures in Report/results/
 
 ./tpcds.sh dm 1 1 --rollback # test the data maintenance and undo it (database unchanged)
 ./tpcds.sh dm-setup          # recreate the data maintenance staging tables and views
@@ -168,7 +193,7 @@ The first argument is the scale factor. Data is read from `DATA_DIR/sf<SF>/` and
 > The data maintenance **modifies the database**. After a run without `--rollback`, reload the data
 > (`./tpcds.sh load <SF>`) before starting a new benchmark.
 
-### 3.5 Results
+### 3.6 Results
 
 Each test writes its raw results in `results/SF<SF>/<date>_<test>/`:
 
@@ -185,7 +210,7 @@ Each test writes its raw results in `results/SF<SF>/<date>_<test>/`:
 
 | Parameter | Value | Specification |
 |---|---|---|
-| Scale factors | 1, 2, 3 and 6 (reference: largest that fits Oracle Free, 12 GB of user data; SF1 = 1.9 GB in Oracle) | 3.1, project statement |
+| Scale factors | 1, 2, 3 and 5 (reference: SF5, about 8.9 GB; SF8 would exceed Oracle Free, 12 GB of user data; SF1 = 1.9 GB in Oracle) | 3.1, project statement |
 | Query streams per Throughput Test (Sq) | 4 | 7.4.6.9 (even, at least 4) |
 | Stream order | Appendix D, stored in `SupportingFiles/Clause7/streams_order.json` | 7.4.4.4, 7.4.6.11 |
 | Refresh runs per Data Maintenance Test | Sq / 2 = 2 | 7.4.8.3 |
@@ -229,7 +254,7 @@ The supporting files follow the clause numbering of the specification (clauses 1
     │   └── run_queries.py       runs a range of queries and reports OK / FAIL
     ├── Clause5/                 data maintenance: data_maintenance.py, create_staging.sql, views.sql
     └── Clause7/                 benchmark driver and metrics: benchmark_queries.py,
-                                 streams_order.json, compute_metrics.py
+                                 streams_order.json, compute_metrics.py, benchmark_report.py
 ```
 
 ## 6. Oracle adaptations
@@ -262,6 +287,10 @@ d_date = '1998-02-19'                 -> d_date = DATE '1998-02-19'
 
 Queries 14, 23, 24 and 39 contain two SQL statements. In `queries/` both statements are in one file,
 so that they are executed and timed as one query (clause 7.1.12).
+
+Query 75: the ratio `curr_yr.sales_cnt / prev_yr.sales_cnt` divides by zero (ORA-01476) when an item
+group has as many returns as sales in the previous year, which happens after the data maintenance
+(SF2). The divisor is wrapped in `NULLIF(..., 0)`: such a group has no ratio and is not returned.
 
 Contributions:
 - Amine: queries 40, 58, 69, 77, 80; tests of queries 50 to 75.
@@ -296,6 +325,9 @@ Adaptations of the views and staging tables:
 - `s_catalog_returns`: dsdgen writes the warehouse id before the catalog page id;
 - `csv`: dsdgen writes the catalog page surrogate key in `clin_catalog_page_number`, so catalog_page is
   joined on `cp_catalog_page_sk`.
+- an item can have only closed versions in the dsdgen data (`i_item_sk` 26000 at SF2): `wsv`, `csv` and
+  `iv` join the latest version of each item (view `item_latest`) instead of `i_rec_end_date IS NULL`,
+  which would give a NULL `item_sk`.
 
 ## 7. Deviations and limitations
 
@@ -307,4 +339,7 @@ Adaptations of the views and staging tables:
 - dsdgen writes an invalid call center id in `s_catalog_order`: in the inserted catalog sales,
   `cs_call_center_sk` and the tax columns that depend on it are NULL.
 - No data accessibility test (Clause 6) and no pricing (Clauses 7.6.5 and 9): not part of the project.
-- Oracle Database Free limits the reference scale factor (12 GB of user data, 2 GB of RAM).
+- Oracle Database Free limits the reference scale factor (12 GB of user data, 2 GB of RAM): SF5 takes
+  about 8.9 GB, SF8 would take about 14 GB.
+- On macOS, `dsdgen` is compiled with `-D_FORTIFY_SOURCE=0`: otherwise the system aborts
+  `dsdgen -update` from SF2 on a false buffer overflow. The generated files are identical.

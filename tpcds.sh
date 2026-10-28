@@ -23,6 +23,7 @@ Benchmark (spec 7.4.2: load, power, throughput 1, dm 1, throughput 2, dm 2)
   dm SF 1|2 [--rollback]     Data Maintenance Test 1 (refresh runs 1-2) or 2 (3-4)     -> T_DM1 / T_DM2
   all SF [SF ...]            the six tests above, in order, for each scale factor, then metrics
   metrics                    T_* and QphDS@SF of the latest complete run of each SF -> results/metrics.csv
+  report                     final report (tables + figures + raw CSV) in Report/results/
   dm-setup                   recreate the data maintenance staging tables and views
 
 Results: results/SF<SF>/<date>_<test>/
@@ -98,7 +99,8 @@ cmd_build() {
             printf '#include <limits.h>\n#include <float.h>\n#ifndef MAXINT\n#define MAXINT INT_MAX\n#endif\n' \
                 > macos_include/values.h
             printf '#include <stdlib.h>\n' > macos_include/malloc.h
-            make OS=LINUX LINUX_CFLAGS="-g -Wno-implicit-function-declaration -Wno-implicit-int \
+            # _FORTIFY_SOURCE=0: macOS aborts dsdgen -update from SF2 on a false buffer overflow
+            make OS=LINUX LINUX_CFLAGS="-g -D_FORTIFY_SOURCE=0 -Wno-implicit-function-declaration -Wno-implicit-int \
                 -Wno-int-conversion -Wno-deprecated-non-prototype -I$PWD/macos_include" dsdgen dsqgen
         else
             make OS=LINUX dsdgen dsqgen
@@ -124,6 +126,10 @@ cmd_generate() {
 
 cmd_metrics() {
     "$PYTHON" "$SF_DIR/Clause7/compute_metrics.py" results
+}
+
+cmd_report() {
+    "$PYTHON" "$SF_DIR/Clause7/benchmark_report.py" results Report/results
 }
 
 cmd_validate() {
@@ -246,6 +252,7 @@ case "$command" in
     dm)         check_scale "${1:-}"; cmd_dm "$@" ;;
     all)        [[ $# -gt 0 ]] || die "give at least one scale factor"; cmd_all "$@" ;;
     metrics)    cmd_metrics ;;
+    report)     cmd_report ;;
     ""|-h|--help|help) usage ;;
     *)          usage >&2; exit 1 ;;
 esac

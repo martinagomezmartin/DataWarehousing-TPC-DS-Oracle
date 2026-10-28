@@ -5,6 +5,14 @@
 --      in every refresh set, which collides with the primary keys of the fact tables.
 --      data_maintenance.py sets the offset to the current max id before the inserts.
 --   3. csv: catalog_page joined on its surrogate key (see the comment in csv).
+--   4. wsv, csv, iv join item_latest (latest version of each item) instead of
+--      i_rec_end_date IS NULL: at SF2 dsdgen writes an item whose only version is
+--      closed (i_item_sk 26000), the refresh data uses it, and the insert fails
+--      on the NOT NULL item_sk.
+
+create or replace view item_latest as
+SELECT * FROM item
+WHERE i_item_sk IN (SELECT max(i_item_sk) FROM item GROUP BY i_item_id);
 
 create or replace view ssv as
 SELECT d_date_sk ss_sold_date_sk,
@@ -123,7 +131,7 @@ LEFT OUTER JOIN web_site ON (word_web_site_id = web_site_id AND web_rec_end_date
 LEFT OUTER JOIN ship_mode ON (word_ship_mode_id = sm_ship_mode_id)
 JOIN s_web_order_lineitem ON (word_order_id = wlin_order_id)
 LEFT OUTER JOIN date_dim d2 ON (to_date(wlin_ship_date, 'YYYY-MM-DD') = d2.d_date)
-LEFT OUTER JOIN item ON (wlin_item_id = i_item_id AND i_rec_end_date IS NULL)
+LEFT OUTER JOIN item_latest item ON (wlin_item_id = i_item_id)
 LEFT OUTER JOIN web_page ON (wlin_web_page_id = wp_web_page_id AND wp_rec_end_date IS NULL)
 LEFT OUTER JOIN warehouse ON (wlin_warehouse_id = w_warehouse_id)
 LEFT OUTER JOIN promotion ON (wlin_promotion_id = p_promo_id);
@@ -215,7 +223,7 @@ LEFT OUTER JOIN date_dim d2 ON (to_date(clin_ship_date, 'YYYY-MM-DD') = d2.d_dat
 -- (s_catalog_order_lineitem.c: mk_join(..., CATALOG_PAGE, ...)), so join on cp_catalog_page_sk
 LEFT OUTER JOIN catalog_page ON (clin_catalog_page_number = cp_catalog_page_sk)
 LEFT OUTER JOIN warehouse ON (clin_warehouse_id = w_warehouse_id)
-LEFT OUTER JOIN item ON (clin_item_id = i_item_id AND i_rec_end_date IS NULL)
+LEFT OUTER JOIN item_latest item ON (clin_item_id = i_item_id)
 LEFT OUTER JOIN promotion ON (clin_promotion_id = p_promo_id);
 
 create or replace view crv as
@@ -269,5 +277,5 @@ SELECT d_date_sk inv_date_sk,
        invn_qty_on_hand inv_quantity_on_hand
 FROM s_inventory
 LEFT OUTER JOIN warehouse ON (invn_warehouse_id = w_warehouse_id)
-LEFT OUTER JOIN item ON (invn_item_id = i_item_id AND i_rec_end_date IS NULL)
+LEFT OUTER JOIN item_latest item ON (invn_item_id = i_item_id)
 LEFT OUTER JOIN date_dim ON (d_date = to_date(invn_date, 'YYYY-MM-DD'));

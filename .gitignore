@@ -7,7 +7,7 @@ tpcds-data/
 tpcds-data.nosync/
 
 # Benchmark runs (copy the final ones to Report/results/)
-results/
+/results/
 
 # Python / macOS / personal notes
 .venv/

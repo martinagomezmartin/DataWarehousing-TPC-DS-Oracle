@@ -1,0 +1,8 @@
+SF7 run finished at Thu Oct 29 00:58:11 CET 2026
+pyenv: python: command not found
+
+The `python' command exists in these Python versions:
+  3.12.6
+
+Note: See 'pyenv help global' for tips on allowing both
+      python2 and python3 to be found.

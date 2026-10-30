@@ -22,7 +22,7 @@ PHASES = [("Load refresh data", "#2a78d6"), ("Deletes (DF_*)", "#eb6834"),
           ("Inserts (LF_*)", "#1baf7a"), ("Commit", "#eda100")]
 THROUGHPUT = [("throughput1", "Throughput Test 1", "#2a78d6"),
               ("throughput2", "Throughput Test 2", "#eb6834")]
-PROFILES = ["linear", "superlinear", "erratic"]
+PROFILES = ["linear", "superlinear"]
 LABELS = {"load": "Load Test (T_Load)", "power": "Power Test (T_Power)",
           "throughput1": "Throughput Test 1 (T_TT1)", "dm1": "Data Maintenance 1 (T_DM1)",
           "throughput2": "Throughput Test 2 (T_TT2)", "dm2": "Data Maintenance 2 (T_DM2)"}
@@ -60,23 +60,20 @@ def collect(results_dir):
 
 
 def plot_times(runs, output):
-    """One panel per test (different magnitudes, never a dual axis), with a linear reference"""
+    """One panel per test (different magnitudes, never a dual axis)"""
     sfs = [r["sf"] for r in runs]
     fig, axes = plt.subplots(2, 3, figsize=(12, 6.5))
     for ax, test in zip(axes.flat, TESTS):
         values = [r["times"][test] for r in runs]
-        ax.plot(sfs, [values[0] * sf / sfs[0] for sf in sfs], color=REFERENCE, linewidth=1.2,
-                linestyle="--", label=f"linear from SF{sfs[0]}")
         ax.plot(sfs, values, color=BLUE, linewidth=2, marker="o", markersize=7,
-                markeredgecolor=SURFACE, markeredgewidth=1.5, label="measured")
+                markeredgecolor=SURFACE, markeredgewidth=1.5)
         for sf, value in zip(sfs, values):
             ax.annotate(f"{value:.0f}s", (sf, value), textcoords="offset points", xytext=(0, 8),
                         ha="center", fontsize=8, color=TEXT_SECONDARY)
         ax.set_title(LABELS[test], fontsize=10, loc="left")
         ax.set_xticks(sfs, [f"SF{sf}" for sf in sfs])
         ax.set_ylabel("seconds")
-        ax.set_ylim(bottom=0, top=max(values + [values[0] * sfs[-1] / sfs[0]]) * 1.18)
-    axes.flat[0].legend(frameon=False, fontsize=8, loc="upper left")
+        ax.set_ylim(bottom=0, top=max(values) * 1.18)
     fig.suptitle("Elapsed time of each test by scale factor", x=0.01, ha="left", fontsize=12)
     fig.tight_layout()
     fig.savefig(output, dpi=160)
@@ -161,11 +158,14 @@ def plot_throughput_vs_power(runs, output):
     plt.close(fig)
 
 
+def unstable(times):
+    """The time drops more than 10x from one scale factor to the next (a change of plan, e.g. Q78):
+    such a query is left out of the profiles"""
+    return any(a >= 1 and b < 0.1 * a for a, b in zip(times, times[1:]))
+
+
 def classify(times, data_ratio):
-    """linear: time ratio up to 2x the data ratio; superlinear: more; erratic: the time drops
-    by more than half from one scale factor to the next (on a query of at least 1 s)"""
-    if any(a >= 1 and b < 0.5 * a for a, b in zip(times, times[1:])):
-        return "erratic"
+    """linear: time ratio up to 2x the data ratio; superlinear: more"""
     if times[0] > 0 and times[-1] / times[0] > 2 * data_ratio:
         return "superlinear"
     return "linear"
@@ -176,7 +176,8 @@ def query_profiles(runs, per_query):
     profiles = {name: [] for name in PROFILES}
     for q in range(1, 100):
         times = [per_query[sf].get(q, 0) for sf in sfs]
-        profiles[classify(times, sfs[-1] / sfs[0])].append(q)
+        if not unstable(times):
+            profiles[classify(times, sfs[-1] / sfs[0])].append(q)
     return profiles
 
 
@@ -187,9 +188,7 @@ def plot_query_profiles(runs, per_query, profiles, output, examples=3):
     fig, axes = plt.subplots(len(PROFILES), examples, figsize=(10, 2.6 * len(PROFILES)),
                              squeeze=False)
     for row, name in enumerate(PROFILES):
-        if name == "erratic":  # largest jump first
-            key = lambda q: max(per_query[sf][q] for sf in sfs) / max(min(per_query[sf][q] for sf in sfs), 1e-3)
-        elif name == "superlinear":  # worst ratio first, among the queries that last 1 s or more
+        if name == "superlinear":  # worst ratio first, among the queries that last 1 s or more
             key = lambda q: (per_query[sfs[-1]][q] >= 1,
                              per_query[sfs[-1]][q] / max(per_query[sfs[0]][q], 1e-3))
         else:  # slowest first
@@ -204,15 +203,13 @@ def plot_query_profiles(runs, per_query, profiles, output, examples=3):
             values = [per_query[sf][q] for sf in sfs]
             labels = [f"SF{sf}" for sf in sfs]
             ax.bar(labels, values, color=colors, width=0.6)
-            ax.plot(labels, [values[0] * sf / sfs[0] for sf in sfs], color=REFERENCE,
-                    linewidth=1.2, linestyle="--")
             ax.set_title(f"Q{q}", loc="left", fontsize=10)
             ax.grid(axis="x", visible=False)
             ax.tick_params(labelsize=8)
             if col == 0:
                 ax.set_ylabel(f"{name} ({len(profiles[name])})\nseconds", fontsize=9)
-    fig.suptitle("Power Test time by scale factor: linear, superlinear and erratic queries "
-                 "(dashed: linear from SF" + str(sfs[0]) + ")", x=0.01, ha="left", fontsize=11)
+    fig.suptitle("Power Test time by scale factor: linear and superlinear queries",
+                 x=0.01, ha="left", fontsize=11)
     fig.tight_layout()
     fig.savefig(output, dpi=160)
     plt.close(fig)
@@ -327,8 +324,8 @@ def write_tables(runs, per_query, profiles, output_dir):
     data_ratio = runs[-1]["sf"] / base["sf"]
     lines += ["", f"## Query profiles (Power Test, SF{base['sf']} to SF{runs[-1]['sf']})", "",
               f"linear: time ratio up to {2 * data_ratio:.0f} (2x the data ratio {data_ratio:.0f}); "
-              "superlinear: above; erratic: the time drops by more than half from one scale factor "
-              "to the next.", "", "| profile | queries | count |", "|---|---|---|"]
+              "superlinear: above. Queries whose time drops more than 10x from one scale factor "
+              "to the next (change of plan, e.g. Q78) are left out.", "", "| profile | queries | count |", "|---|---|---|"]
     for name in PROFILES:
         lines.append(f"| {name} | " + ", ".join(f"Q{q}" for q in profiles[name])
                      + f" | {len(profiles[name])} |")

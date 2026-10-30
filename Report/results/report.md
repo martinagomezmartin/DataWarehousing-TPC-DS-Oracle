@@ -38,13 +38,12 @@ T_TT / T_Power: 1 = the 4 streams fully in parallel, 4 = one after the other.
 
 ## Query profiles (Power Test, SF1 to SF7)
 
-linear: time ratio up to 14 (2x the data ratio 7); superlinear: above; erratic: the time drops by more than half from one scale factor to the next.
+linear: time ratio up to 14 (2x the data ratio 7); superlinear: above. Queries whose time drops more than 10x from one scale factor to the next (change of plan, e.g. Q78) are left out.
 
 | profile | queries | count |
 |---|---|---|
-| linear | Q2, Q5, Q8, Q9, Q13, Q18, Q22, Q23, Q25, Q26, Q28, Q29, Q30, Q31, Q32, Q34, Q36, Q37, Q39, Q41, Q43, Q45, Q46, Q47, Q48, Q51, Q55, Q56, Q57, Q59, Q61, Q62, Q64, Q65, Q66, Q68, Q70, Q72, Q73, Q74, Q79, Q81, Q82, Q83, Q84, Q85, Q89, Q90, Q91, Q92, Q96, Q98, Q99 | 53 |
+| linear | Q2, Q5, Q8, Q9, Q13, Q17, Q18, Q22, Q23, Q25, Q26, Q28, Q29, Q30, Q31, Q32, Q34, Q36, Q37, Q39, Q41, Q43, Q45, Q46, Q47, Q48, Q51, Q55, Q56, Q57, Q59, Q61, Q62, Q64, Q65, Q66, Q68, Q70, Q72, Q73, Q74, Q79, Q81, Q82, Q83, Q84, Q85, Q89, Q90, Q91, Q92, Q96, Q98, Q99 | 54 |
 | superlinear | Q1, Q3, Q4, Q6, Q7, Q10, Q11, Q12, Q14, Q15, Q16, Q19, Q20, Q21, Q24, Q27, Q33, Q35, Q38, Q40, Q42, Q44, Q49, Q50, Q52, Q53, Q54, Q58, Q60, Q63, Q67, Q69, Q71, Q75, Q76, Q77, Q80, Q86, Q87, Q88, Q93, Q94, Q95, Q97 | 44 |
-| erratic | Q17, Q78 | 2 |
 
 ## 10 slowest Power Test queries at SF7 (seconds)
 

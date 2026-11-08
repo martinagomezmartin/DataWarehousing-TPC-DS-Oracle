@@ -206,6 +206,30 @@ Each test writes its raw results in `results/SF<SF>/<date>_<test>/`:
 
 `results/` is ignored by Git. The CSV files of the final runs are copied to `Report/results/`.
 
+### 3.7 Optimization comparison script
+
+`./benchmark.sh` automates an SF1 comparison using `optimization/run_benchmark.py`:
+
+1. Run `set.up.py SF1` when that file is present; otherwise build/generate SF1 data as needed and
+   use the repository's `./tpcds.sh load 1` setup.
+2. Remove schema statistics and run the default qualification suite.
+3. Gather schema statistics and run it again.
+4. Create the materialized views in `optimization/create_materialized_views.sql` and run the suite
+   with Oracle query rewrite enabled.
+
+The setup reloads the TPC-DS schema and therefore replaces its current contents. Run from the
+repository root after configuring `.env`; the fallback setup also needs the TPC-DS kit. The script
+uses four runs per query and a 900-second per-query timeout by default. Override these with
+`BENCHMARK_RUNS`, `BENCHMARK_TIMEOUT_SECONDS`, `PYTHON`, `QUERY_DIR`, or `SETUP_SCRIPT`.
+
+Each invocation creates a timestamped `results/benchmark_<timestamp>/` directory with a JSON
+summary and execution log per phase. Failed and timed-out query attempts include elapsed time and
+status. Each phase also has an index-usage snapshot and plans for the five slowest queries with recorded
+timings (including failed or timed-out attempts). Those plans are captured in a separate rerun with
+runtime row statistics; they may differ from the timed run if plans or cache state change. Oracle's
+`USER_OBJECT_USAGE` reports index usage for the phase, not per query; query-specific index names are
+extracted from the runtime plans.
+
 ## 4. Benchmark configuration
 
 | Parameter | Value | Specification |
@@ -252,6 +276,7 @@ The supporting files follow the clause numbering of the specification (clauses 1
     │   ├── queries_archive/     previous versions: original, imad, qualification, oracle_fixed
     │   ├── check_queries.py     comparison with the official answer sets
     │   └── run_queries.py       runs a range of queries and reports OK / FAIL
+    ├── queries_optimized/       hand-tuned variants for selected queries used in optimization checks
     ├── Clause5/                 data maintenance: data_maintenance.py, create_staging.sql, views.sql
     └── Clause7/                 benchmark driver and metrics: benchmark_queries.py,
                                  streams_order.json, compute_metrics.py, benchmark_report.py
@@ -287,6 +312,11 @@ d_date = '1998-02-19'                 -> d_date = DATE '1998-02-19'
 
 Queries 14, 23, 24 and 39 contain two SQL statements. In `queries/` both statements are in one file,
 so that they are executed and timed as one query (clause 7.1.12).
+
+The directory `SupportingFiles/queries_optimized/` stores hand-tuned SQL variants for selected
+queries used to compare optimized plans against the standard qualification SQL. These files are
+not part of the benchmark suite itself; they are used in focused performance checks, such as the
+`compare_optimized.py` benchmarking workflow against the baseline queries.
 
 Query 75: the ratio `curr_yr.sales_cnt / prev_yr.sales_cnt` divides by zero (ORA-01476) when an item
 group has as many returns as sales in the previous year, which happens after the data maintenance

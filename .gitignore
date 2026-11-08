@@ -14,3 +14,4 @@ tpcds-data.nosync/
 __pycache__/
 .DS_Store
 commandes.txt
+oracle-docker/

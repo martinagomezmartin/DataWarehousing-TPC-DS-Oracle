@@ -1,0 +1,59 @@
+Query 63 (original), SF3: 2.33s, OK
+
+===== Statement 1 =====
+
+SQL_ID	d268uswqu4vaz, child number 0
+-------------------------------------
+/* plan q63 original 202969720 s1 */ select * from (select  *  from
+(select i_manager_id		  ,sum(ss_sales_price) sum_sales
+      ,avg(sum(ss_sales_price)) over (partition by i_manager_id)
+avg_monthly_sales	from item	    ,store_sales
+,date_dim	    ,store	 where ss_item_sk = i_item_sk
+and ss_sold_date_sk = d_date_sk 	and ss_store_sk = s_store_sk
+     and d_month_seq in (1200,1200+1,1200+2,1200+3,1200+4,1200+5,1200+6,
+1200+7,1200+8,1200+9,1200+10,1200+11)	      and ((	i_category in
+('Books','Children','Electronics')		 and i_class in
+('personal','portable','reference','self-help') 	      and
+i_brand in ('scholaramalgamalg #14','scholaramalgamalg #7',
+	'exportiunivamalg #9','scholaramalgamalg #9'))		  or(
+ i_category in ('Women','Music','Men')		     and i_class in
+('accessories','classical','fragrances','pants')	       and
+i_brand in ('amalgimporto #1','edu
+
+Plan hash value: 2503187427
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation			     | Name	   | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT		     |		   |	  1 |	     |	  100 |00:00:02.28 |	 380K|	  174K|       |       | 	 |
+|*  1 |  COUNT STOPKEY			     |		   |	  1 |	     |	  100 |00:00:02.28 |	 380K|	  174K|       |       | 	 |
+|   2 |   VIEW				     |		   |	  1 |	  43 |	  100 |00:00:02.28 |	 380K|	  174K|       |       | 	 |
+|*  3 |    SORT ORDER BY STOPKEY	     |		   |	  1 |	  43 |	  100 |00:00:02.28 |	 380K|	  174K|  9216 |  9216 | 8192  (0)|
+|*  4 |     VIEW			     |		   |	  1 |	  43 |	 1086 |00:00:02.28 |	 380K|	  174K|       |       | 	 |
+|   5 |      WINDOW BUFFER		     |		   |	  1 |	  43 |	 1152 |00:00:02.28 |	 380K|	  174K| 52224 | 52224 |47104  (0)|
+|   6 |       SORT GROUP BY		     |		   |	  1 |	  43 |	 1152 |00:00:02.28 |	 380K|	  174K|   106K|   106K|96256  (0)|
+|   7 |        NESTED LOOPS		     |		   |	  1 |	 213 |	61998 |00:00:02.26 |	 380K|	  174K|       |       | 	 |
+|*  8 | 	HASH JOIN		     |		   |	  1 |	 223 |	63475 |00:00:02.23 |	 380K|	  174K|  1922K|  1922K| 1728K (0)|
+|*  9 | 	 TABLE ACCESS FULL	     | DATE_DIM    |	  1 |	 365 |	  366 |00:00:00.01 |	1382 |	    0 |       |       | 	 |
+|  10 | 	 NESTED LOOPS		     |		   |	  1 |	1165 |	  371K|00:00:02.16 |	 379K|	  174K|       |       | 	 |
+|  11 | 	  NESTED LOOPS		     |		   |	  1 |	1195 |	  371K|00:00:00.35 |	7892 |	 3368 |       |       | 	 |
+|* 12 | 	   TABLE ACCESS FULL	     | ITEM	   |	  1 |	   5 |	 1897 |00:00:00.02 |	2643 |	    0 |       |       | 	 |
+|* 13 | 	   INDEX RANGE SCAN	     | SYS_C008783 |   1897 |	 239 |	  371K|00:00:00.31 |	5249 |	 3368 |       |       | 	 |
+|  14 | 	  TABLE ACCESS BY INDEX ROWID| STORE_SALES |	371K|	 239 |	  371K|00:00:01.76 |	 371K|	  171K|       |       | 	 |
+|* 15 | 	INDEX UNIQUE SCAN	     | SYS_C008741 |  63475 |	   1 |	61998 |00:00:00.02 |	   4 |	    1 |       |       | 	 |
+--------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(ROWNUM<=100)
+   3 - filter(ROWNUM<=100)
+   4 - filter(CASE  WHEN "AVG_MONTHLY_SALES">0 THEN ABS("SUM_SALES"-"AVG_MONTHLY_SALES")/"AVG_MONTHLY_SALES" ELSE NULL END >.1)
+   8 - access("SS_SOLD_DATE_SK"="D_DATE_SK")
+   9 - filter(("D_MONTH_SEQ"=1200 OR "D_MONTH_SEQ"=1201 OR "D_MONTH_SEQ"=1202 OR "D_MONTH_SEQ"=1203 OR "D_MONTH_SEQ"=1204 OR
+	      "D_MONTH_SEQ"=1205 OR "D_MONTH_SEQ"=1206 OR "D_MONTH_SEQ"=1207 OR "D_MONTH_SEQ"=1208 OR "D_MONTH_SEQ"=1209 OR "D_MONTH_SEQ"=1210 OR
+	      "D_MONTH_SEQ"=1211))
+  12 - filter(((INTERNAL_FUNCTION("I_CATEGORY") AND INTERNAL_FUNCTION("I_BRAND") AND INTERNAL_FUNCTION("I_CLASS")) OR
+	      (INTERNAL_FUNCTION("I_CATEGORY") AND INTERNAL_FUNCTION("I_BRAND") AND INTERNAL_FUNCTION("I_CLASS"))))
+  13 - access("SS_ITEM_SK"="I_ITEM_SK")
+  15 - access("SS_STORE_SK"="S_STORE_SK")

@@ -1,0 +1,218 @@
+Query 23 (original), SF3: 17.59s, OK
+
+===== Statement 1 =====
+
+SQL_ID	4v37vdrbzr9wp, child number 0
+-------------------------------------
+/* plan q23 original 597297714 s1 */ with frequent_ss_items as
+(select substr(i_item_desc,1,30) itemdesc,i_item_sk item_sk,d_date
+solddate,count(*) cnt	from store_sales       ,date_dim	,item
+where ss_sold_date_sk = d_date_sk     and ss_item_sk = i_item_sk
+and d_year in (2000,2000+1,2000+2,2000+3)   group by
+substr(i_item_desc,1,30),i_item_sk,d_date   having count(*) >4),
+max_store_sales as  (select max(csales) tpcds_cmax    from (select
+c_customer_sk,sum(ss_quantity*ss_sales_price) csales	     from
+store_sales		,customer	      ,date_dim 	 where
+ss_customer_sk = c_customer_sk		and ss_sold_date_sk = d_date_sk
+	 and d_year in (2000,2000+1,2000+2,2000+3)	    group by
+c_customer_sk)),  best_ss_customer as  (select
+c_customer_sk,sum(ss_quantity*ss_sales_price) ssales   from store_sales
+      ,customer   where ss_customer_sk = c_customer_sk	 group by
+c_customer_sk	having sum(ss_quantity*ss_sales_price) > (50/100.0) *
+(select
+
+Plan hash value: 1090441674
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation				 | Name 		      | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT			 |			      |      1 |	|      1 |00:00:07.94 |    5924K|    554K|  39680 |	  |	  |	     |	       |
+|   1 |  TEMP TABLE TRANSFORMATION		 |			      |      1 |	|      1 |00:00:07.94 |    5924K|    554K|  39680 |	  |	  |	     |	       |
+|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D6656_10996A1 |      1 |	|      0 |00:00:02.08 |     127K|    165K|  39680 |  1024 |  1024 |	     |	       |
+|*  3 |    FILTER				 |			      |      1 |	|    701 |00:00:02.08 |     127K|    165K|  39680 |	  |	  |	     |	       |
+|   4 |     HASH GROUP BY			 |			      |      1 |    329K|   4252K|00:00:01.99 |     127K|    165K|  39680 |   397M|    20M|  100M (1)|	   320M|
+|*  5 |      HASH JOIN				 |			      |      1 |   6589K|   4966K|00:00:00.46 |     127K|    125K|	0 |  1449K|  1449K| 1720K (0)|	       |
+|*  6 |       TABLE ACCESS FULL 		 | DATE_DIM		      |      1 |   1461 |   1461 |00:00:00.01 |    1382 |      0 |	0 |	  |	  |	     |	       |
+|*  7 |       HASH JOIN 			 |			      |      1 |   8610K|   8639K|00:00:00.34 |     125K|    125K|	0 |  6587K|  2318K| 6860K (0)|	       |
+|   8 |        TABLE ACCESS FULL		 | ITEM 		      |      1 |  36000 |  36000 |00:00:00.01 |    2640 |   2639 |	0 |	  |	  |	     |	       |
+|   9 |        TABLE ACCESS FULL		 | STORE_SALES		      |      1 |   8639K|   8639K|00:00:00.18 |     122K|    122K|	0 |	  |	  |	     |	       |
+|  10 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D6657_10996A1 |      1 |	|      0 |00:00:05.62 |    5652K|    246K|	0 |  1024 |  1024 |	     |	       |
+|* 11 |    FILTER				 |			      |      1 |	|  16233 |00:00:05.62 |    5652K|    246K|	0 |	  |	  |	     |	       |
+|  12 |     HASH GROUP BY			 |			      |      1 |   9276 |    183K|00:00:04.32 |    5525K|    123K|	0 |    13M|  3126K|   12M (0)|	       |
+|  13 |      NESTED LOOPS			 |			      |      1 |   8250K|   8250K|00:00:03.52 |    5525K|    123K|	0 |	  |	  |	     |	       |
+|  14 |       TABLE ACCESS FULL 		 | STORE_SALES		      |      1 |   8639K|   8639K|00:00:00.51 |     122K|    122K|	0 |	  |	  |	     |	       |
+|* 15 |       INDEX UNIQUE SCAN 		 | SYS_C008747		      |   8639K|      1 |   8250K|00:00:02.13 |    5402K|    353 |	0 |	  |	  |	     |	       |
+|  16 |     VIEW				 |			      |      1 |      1 |      1 |00:00:01.30 |     126K|    122K|	0 |	  |	  |	     |	       |
+|  17 |      SORT AGGREGATE			 |			      |      1 |      1 |      1 |00:00:01.30 |     126K|    122K|	0 |	  |	  |	     |	       |
+|  18 |       VIEW				 |			      |      1 |    177K|    169K|00:00:01.29 |     126K|    122K|	0 |	  |	  |	     |	       |
+|  19 |        NESTED LOOPS SEMI		 |			      |      1 |    177K|    169K|00:00:01.29 |     126K|    122K|	0 |	  |	  |	     |	       |
+|  20 | 	VIEW				 | VW_GBC_15		      |      1 |    185K|    169K|00:00:01.25 |     124K|    122K|	0 |	  |	  |	     |	       |
+|  21 | 	 SORT GROUP BY			 |			      |      1 |    185K|    169K|00:00:01.24 |     124K|    122K|	0 |    11M|  6120K|   10M (0)|	       |
+|* 22 | 	  HASH JOIN			 |			      |      1 |   6611K|   4966K|00:00:00.33 |     124K|    122K|	0 |  1856K|  1856K| 1714K (0)|	       |
+|* 23 | 	   TABLE ACCESS FULL		 | DATE_DIM		      |      1 |   1461 |   1461 |00:00:00.01 |    1382 |      0 |	0 |	  |	  |	     |	       |
+|  24 | 	   TABLE ACCESS FULL		 | STORE_SALES		      |      1 |   8639K|   8639K|00:00:00.22 |     122K|    122K|	0 |	  |	  |	     |	       |
+|* 25 | 	INDEX UNIQUE SCAN		 | SYS_C008747		      |    169K|      1 |    169K|00:00:00.02 |    2478 |      0 |	0 |	  |	  |	     |	       |
+|* 26 |   COUNT STOPKEY 			 |			      |      1 |	|      1 |00:00:00.24 |     145K|    142K|	0 |	  |	  |	     |	       |
+|  27 |    VIEW 				 |			      |      1 |      1 |      1 |00:00:00.24 |     145K|    142K|	0 |	  |	  |	     |	       |
+|* 28 |     SORT AGGREGATE			 |			      |      1 |      1 |      1 |00:00:00.24 |     145K|    142K|	0 |	  |	  |	     |	       |
+|  29 |      VIEW				 |			      |      1 |   6602 |    121 |00:00:00.24 |     145K|    142K|	0 |	  |	  |	     |	       |
+|  30 |       UNION-ALL 			 |			      |      1 |   6602 |    121 |00:00:00.24 |     145K|    142K|	0 |	  |	  |	     |	       |
+|* 31 |        HASH JOIN SEMI			 |			      |      1 |   3741 |     89 |00:00:00.16 |   96660 |  95266 |	0 |  1123K|  1123K| 1527K (0)|	       |
+|* 32 | 	HASH JOIN RIGHT SEMI		 |			      |      1 |   3753 |   3365 |00:00:00.16 |   96660 |  95266 |	0 |  2601K|  2601K| 2196K (0)|	       |
+|  33 | 	 VIEW				 | VW_NSO_2		      |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  34 | 	  VIEW				 |			      |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  35 | 	   TABLE ACCESS FULL		 | SYS_TEMP_0FD9D6657_10996A1 |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|* 36 | 	 HASH JOIN			 |			      |      1 |  71399 |  39465 |00:00:00.16 |   96660 |  95266 |	0 |  1695K|  1695K| 1624K (0)|	       |
+|* 37 | 	  TABLE ACCESS FULL		 | DATE_DIM		      |      1 |     30 |     29 |00:00:00.01 |    1382 |      0 |	0 |	  |	  |	     |	       |
+|  38 | 	  TABLE ACCESS FULL		 | CATALOG_SALES	      |      1 |   4319K|   4319K|00:00:00.13 |   95278 |  95266 |	0 |	  |	  |	     |	       |
+|  39 | 	VIEW				 | VW_NSO_1		      |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  40 | 	 VIEW				 |			      |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  41 | 	  TABLE ACCESS FULL		 | SYS_TEMP_0FD9D6656_10996A1 |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|* 42 |        HASH JOIN SEMI			 |			      |      1 |   2861 |     32 |00:00:00.08 |   48844 |  47452 |	0 |  1123K|  1123K| 1413K (0)|	       |
+|* 43 | 	HASH JOIN RIGHT SEMI		 |			      |      1 |   2870 |   1620 |00:00:00.08 |   48844 |  47452 |	0 |  2601K|  2601K| 2166K (0)|	       |
+|  44 | 	 VIEW				 | VW_NSO_4		      |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  45 | 	  VIEW				 |			      |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  46 | 	   TABLE ACCESS FULL		 | SYS_TEMP_0FD9D6657_10996A1 |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|* 47 | 	 HASH JOIN			 |			      |      1 |  36132 |  19688 |00:00:00.08 |   48844 |  47452 |	0 |  1695K|  1695K| 1624K (0)|	       |
+|* 48 | 	  TABLE ACCESS FULL		 | DATE_DIM		      |      1 |     30 |     29 |00:00:00.01 |    1382 |      0 |	0 |	  |	  |	     |	       |
+|  49 | 	  TABLE ACCESS FULL		 | WEB_SALES		      |      1 |   2160K|   2160K|00:00:00.06 |   47462 |  47452 |	0 |	  |	  |	     |	       |
+|  50 | 	VIEW				 | VW_NSO_3		      |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  51 | 	 VIEW				 |			      |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  52 | 	  TABLE ACCESS FULL		 | SYS_TEMP_0FD9D6656_10996A1 |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - filter(COUNT(*)>4)
+   5 - access("SS_SOLD_DATE_SK"="D_DATE_SK")
+   6 - filter(("D_YEAR"=2000 OR "D_YEAR"=2001 OR "D_YEAR"=2002 OR "D_YEAR"=2003))
+   7 - access("SS_ITEM_SK"="I_ITEM_SK")
+  11 - filter(SUM("SS_QUANTITY"*"SS_SALES_PRICE")>.5*)
+  15 - access("SS_CUSTOMER_SK"="C_CUSTOMER_SK")
+  22 - access("SS_SOLD_DATE_SK"="D_DATE_SK")
+  23 - filter(("D_YEAR"=2000 OR "D_YEAR"=2001 OR "D_YEAR"=2002 OR "D_YEAR"=2003))
+  25 - access("ITEM_1"="C_CUSTOMER_SK")
+  26 - filter(ROWNUM<=100)
+  28 - filter(ROWNUM<=100)
+  31 - access("CS_ITEM_SK"="ITEM_SK")
+  32 - access("CS_BILL_CUSTOMER_SK"="C_CUSTOMER_SK")
+  36 - access("CS_SOLD_DATE_SK"="D_DATE_SK")
+  37 - filter(("D_YEAR"=2000 AND "D_MOY"=2))
+  42 - access("WS_ITEM_SK"="ITEM_SK")
+  43 - access("WS_BILL_CUSTOMER_SK"="C_CUSTOMER_SK")
+  47 - access("WS_SOLD_DATE_SK"="D_DATE_SK")
+  48 - filter(("D_YEAR"=2000 AND "D_MOY"=2))
+
+===== Statement 2 =====
+
+SQL_ID	fq7zucm1cdwtk, child number 0
+-------------------------------------
+/* plan q23 original 597297714 s2 */ with frequent_ss_items as	(select
+substr(i_item_desc,1,30) itemdesc,i_item_sk item_sk,d_date
+solddate,count(*) cnt	from store_sales       ,date_dim       ,item
+where ss_sold_date_sk = d_date_sk     and ss_item_sk = i_item_sk
+and d_year in (2000,2000 + 1,2000 + 2,2000 + 3)   group by
+substr(i_item_desc,1,30),i_item_sk,d_date   having count(*) >4),
+max_store_sales as  (select max(csales) tpcds_cmax   from (select
+c_customer_sk,sum(ss_quantity*ss_sales_price) csales	     from
+store_sales		,customer	      ,date_dim 	 where
+ss_customer_sk = c_customer_sk		and ss_sold_date_sk = d_date_sk
+	 and d_year in (2000,2000+1,2000+2,2000+3)	   group by
+c_customer_sk)),  best_ss_customer as  (select
+c_customer_sk,sum(ss_quantity*ss_sales_price) ssales   from store_sales
+      ,customer   where ss_customer_sk = c_customer_sk	 group by
+c_customer_sk	having sum(ss_quantity*ss_sales_price) > (50/100.0) *
+(selec
+
+Plan hash value: 4018777532
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation				 | Name 		      | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT			 |			      |      1 |	|    100 |00:00:09.54 |    5934K|    563K|  39680 |	  |	  |	     |	       |
+|   1 |  TEMP TABLE TRANSFORMATION		 |			      |      1 |	|    100 |00:00:09.54 |    5934K|    563K|  39680 |	  |	  |	     |	       |
+|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D6658_10996A1 |      1 |	|      0 |00:00:01.63 |     127K|    165K|  39680 |  1024 |  1024 |	     |	       |
+|*  3 |    FILTER				 |			      |      1 |	|    701 |00:00:01.63 |     127K|    165K|  39680 |	  |	  |	     |	       |
+|   4 |     HASH GROUP BY			 |			      |      1 |    329K|   4252K|00:00:01.53 |     127K|    165K|  39680 |   397M|    20M|   82M (1)|	   320M|
+|*  5 |      HASH JOIN				 |			      |      1 |   6589K|   4966K|00:00:00.49 |     127K|    125K|	0 |  1449K|  1449K| 1688K (0)|	       |
+|*  6 |       TABLE ACCESS FULL 		 | DATE_DIM		      |      1 |   1461 |   1461 |00:00:00.01 |    1382 |      0 |	0 |	  |	  |	     |	       |
+|*  7 |       HASH JOIN 			 |			      |      1 |   8610K|   8639K|00:00:00.37 |     125K|    125K|	0 |  6587K|  2318K| 6857K (0)|	       |
+|   8 |        TABLE ACCESS FULL		 | ITEM 		      |      1 |  36000 |  36000 |00:00:00.03 |    2643 |   2638 |	0 |	  |	  |	     |	       |
+|   9 |        TABLE ACCESS FULL		 | STORE_SALES		      |      1 |   8639K|   8639K|00:00:00.18 |     122K|    122K|	0 |	  |	  |	     |	       |
+|  10 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D6659_10996A1 |      1 |	|      0 |00:00:07.09 |    5652K|    245K|	0 |  1024 |  1024 |	     |	       |
+|* 11 |    FILTER				 |			      |      1 |	|  16233 |00:00:07.09 |    5652K|    245K|	0 |	  |	  |	     |	       |
+|  12 |     HASH GROUP BY			 |			      |      1 |   9276 |    183K|00:00:05.01 |    5525K|    122K|	0 |    13M|  3126K|   12M (0)|	       |
+|  13 |      NESTED LOOPS			 |			      |      1 |   8250K|   8250K|00:00:04.05 |    5525K|    122K|	0 |	  |	  |	     |	       |
+|  14 |       TABLE ACCESS FULL 		 | STORE_SALES		      |      1 |   8639K|   8639K|00:00:00.60 |     122K|    122K|	0 |	  |	  |	     |	       |
+|* 15 |       INDEX UNIQUE SCAN 		 | SYS_C008747		      |   8639K|      1 |   8250K|00:00:02.47 |    5402K|      0 |	0 |	  |	  |	     |	       |
+|  16 |     VIEW				 |			      |      1 |      1 |      1 |00:00:02.07 |     126K|    122K|	0 |	  |	  |	     |	       |
+|  17 |      SORT AGGREGATE			 |			      |      1 |      1 |      1 |00:00:02.07 |     126K|    122K|	0 |	  |	  |	     |	       |
+|  18 |       VIEW				 |			      |      1 |    177K|    169K|00:00:02.07 |     126K|    122K|	0 |	  |	  |	     |	       |
+|  19 |        NESTED LOOPS SEMI		 |			      |      1 |    177K|    169K|00:00:02.06 |     126K|    122K|	0 |	  |	  |	     |	       |
+|  20 | 	VIEW				 | VW_GBC_15		      |      1 |    185K|    169K|00:00:02.01 |     124K|    122K|	0 |	  |	  |	     |	       |
+|  21 | 	 SORT GROUP BY			 |			      |      1 |    185K|    169K|00:00:02.00 |     124K|    122K|	0 |    11M|  6120K|   10M (0)|	       |
+|* 22 | 	  HASH JOIN			 |			      |      1 |   6611K|   4966K|00:00:00.77 |     124K|    122K|	0 |  1856K|  1856K| 1711K (0)|	       |
+|* 23 | 	   TABLE ACCESS FULL		 | DATE_DIM		      |      1 |   1461 |   1461 |00:00:00.01 |    1382 |      0 |	0 |	  |	  |	     |	       |
+|  24 | 	   TABLE ACCESS FULL		 | STORE_SALES		      |      1 |   8639K|   8639K|00:00:00.60 |     122K|    122K|	0 |	  |	  |	     |	       |
+|* 25 | 	INDEX UNIQUE SCAN		 | SYS_C008747		      |    169K|      1 |    169K|00:00:00.03 |    2478 |      0 |	0 |	  |	  |	     |	       |
+|* 26 |   COUNT STOPKEY 			 |			      |      1 |	|    100 |00:00:00.83 |     155K|    152K|	0 |	  |	  |	     |	       |
+|  27 |    VIEW 				 |			      |      1 |   6521 |    100 |00:00:00.83 |     155K|    152K|	0 |	  |	  |	     |	       |
+|* 28 |     SORT ORDER BY STOPKEY		 |			      |      1 |   6521 |    100 |00:00:00.83 |     155K|    152K|	0 | 13312 | 13312 |12288  (0)|	       |
+|  29 |      VIEW				 |			      |      1 |   6521 |    100 |00:00:00.83 |     155K|    152K|	0 |	  |	  |	     |	       |
+|  30 |       UNION-ALL 			 |			      |      1 |   6521 |    100 |00:00:00.83 |     155K|    152K|	0 |	  |	  |	     |	       |
+|  31 |        HASH GROUP BY			 |			      |      1 |   3661 |     74 |00:00:00.50 |     101K|    100K|	0 |  1186K|  1117K|	     |	       |
+|* 32 | 	HASH JOIN SEMI			 |			      |      1 |   3661 |     89 |00:00:00.50 |     101K|    100K|	0 |  1186K|  1186K| 1518K (0)|	       |
+|* 33 | 	 HASH JOIN			 |			      |      1 |   3673 |   3365 |00:00:00.50 |     101K|    100K|	0 |  1162K|  1162K| 1605K (0)|	       |
+|* 34 | 	  HASH JOIN RIGHT SEMI		 |			      |      1 |   3692 |   3365 |00:00:00.35 |   96660 |  95266 |	0 |  2601K|  2601K| 2198K (0)|	       |
+|  35 | 	   VIEW 			 | VW_NSO_2		      |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  36 | 	    VIEW			 |			      |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  37 | 	     TABLE ACCESS FULL		 | SYS_TEMP_0FD9D6659_10996A1 |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|* 38 | 	   HASH JOIN			 |			      |      1 |  70228 |  39465 |00:00:00.35 |   96660 |  95266 |	0 |  1922K|  1922K| 1650K (0)|	       |
+|  39 | 	    VIEW			 | VW_GBF_26		      |      1 |     30 |     29 |00:00:00.01 |    1382 |      0 |	0 |	  |	  |	     |	       |
+|* 40 | 	     TABLE ACCESS FULL		 | DATE_DIM		      |      1 |     30 |     29 |00:00:00.01 |    1382 |      0 |	0 |	  |	  |	     |	       |
+|  41 | 	    TABLE ACCESS FULL		 | CATALOG_SALES	      |      1 |   4319K|   4319K|00:00:00.31 |   95278 |  95266 |	0 |	  |	  |	     |	       |
+|  42 | 	  TABLE ACCESS FULL		 | CUSTOMER		      |      1 |    188K|    188K|00:00:00.15 |    5035 |   5033 |	0 |	  |	  |	     |	       |
+|  43 | 	 VIEW				 | VW_NSO_1		      |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  44 | 	  VIEW				 |			      |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  45 | 	   TABLE ACCESS FULL		 | SYS_TEMP_0FD9D6658_10996A1 |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  46 |        HASH GROUP BY			 |			      |      1 |   2860 |     26 |00:00:00.32 |   53883 |  52484 |	0 |  1110K|  1110K|	     |	       |
+|* 47 | 	HASH JOIN			 |			      |      1 |   2860 |     32 |00:00:00.32 |   53883 |  52484 |	0 |  1123K|  1123K| 1324K (0)|	       |
+|* 48 | 	 HASH JOIN SEMI 		 |			      |      1 |   2861 |     32 |00:00:00.19 |   48844 |  47452 |	0 |  1123K|  1123K| 1445K (0)|	       |
+|* 49 | 	  HASH JOIN RIGHT SEMI		 |			      |      1 |   2870 |   1620 |00:00:00.19 |   48844 |  47452 |	0 |  2601K|  2601K| 2198K (0)|	       |
+|  50 | 	   VIEW 			 | VW_NSO_4		      |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  51 | 	    VIEW			 |			      |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  52 | 	     TABLE ACCESS FULL		 | SYS_TEMP_0FD9D6659_10996A1 |      1 |   9276 |  16233 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|* 53 | 	   HASH JOIN			 |			      |      1 |  36132 |  19688 |00:00:00.19 |   48844 |  47452 |	0 |  1695K|  1695K| 1650K (0)|	       |
+|* 54 | 	    TABLE ACCESS FULL		 | DATE_DIM		      |      1 |     30 |     29 |00:00:00.01 |    1382 |      0 |	0 |	  |	  |	     |	       |
+|  55 | 	    TABLE ACCESS FULL		 | WEB_SALES		      |      1 |   2160K|   2160K|00:00:00.17 |   47462 |  47452 |	0 |	  |	  |	     |	       |
+|  56 | 	  VIEW				 | VW_NSO_3		      |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  57 | 	   VIEW 			 |			      |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  58 | 	    TABLE ACCESS FULL		 | SYS_TEMP_0FD9D6658_10996A1 |      1 |    329K|    701 |00:00:00.01 |       0 |      0 |	0 |	  |	  |	     |	       |
+|  59 | 	 TABLE ACCESS FULL		 | CUSTOMER		      |      1 |    188K|    188K|00:00:00.13 |    5039 |   5032 |	0 |	  |	  |	     |	       |
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - filter(COUNT(*)>4)
+   5 - access("SS_SOLD_DATE_SK"="D_DATE_SK")
+   6 - filter(("D_YEAR"=2000 OR "D_YEAR"=2001 OR "D_YEAR"=2002 OR "D_YEAR"=2003))
+   7 - access("SS_ITEM_SK"="I_ITEM_SK")
+  11 - filter(SUM("SS_QUANTITY"*"SS_SALES_PRICE")>.5*)
+  15 - access("SS_CUSTOMER_SK"="C_CUSTOMER_SK")
+  22 - access("SS_SOLD_DATE_SK"="D_DATE_SK")
+  23 - filter(("D_YEAR"=2000 OR "D_YEAR"=2001 OR "D_YEAR"=2002 OR "D_YEAR"=2003))
+  25 - access("ITEM_1"="C_CUSTOMER_SK")
+  26 - filter(ROWNUM<=100)
+  28 - filter(ROWNUM<=100)
+  32 - access("CS_ITEM_SK"="ITEM_SK")
+  33 - access("CS_BILL_CUSTOMER_SK"="C_CUSTOMER_SK")
+  34 - access("CS_BILL_CUSTOMER_SK"="C_CUSTOMER_SK")
+  38 - access("CS_SOLD_DATE_SK"="ITEM_1")
+  40 - filter(("D_YEAR"=2000 AND "D_MOY"=2))
+  47 - access("WS_BILL_CUSTOMER_SK"="C_CUSTOMER_SK")
+  48 - access("WS_ITEM_SK"="ITEM_SK")
+  49 - access("WS_BILL_CUSTOMER_SK"="C_CUSTOMER_SK")
+  53 - access("WS_SOLD_DATE_SK"="D_DATE_SK")
+  54 - filter(("D_YEAR"=2000 AND "D_MOY"=2))

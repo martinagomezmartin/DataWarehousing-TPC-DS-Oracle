@@ -1,0 +1,57 @@
+Query 63 (optimized), SF3: 0.34s, OK
+
+===== Statement 1 =====
+
+SQL_ID	2vvya9yhpbpgb, child number 0
+-------------------------------------
+/* plan q63 optimized 83657354 s1 */ with items as (	 -- dynamic
+sampling: Oracle counts the selected items (about 1900) instead of
+estimating 5	 select /*+ dynamic_sampling(item 4) */ i_item_sk,
+i_manager_id	 from item     where (i_category in
+('Books','Children','Electronics')	      and i_class in
+('personal','portable','reference','self-help') 	   and i_brand
+in ('scholaramalgamalg #14','scholaramalgamalg #7',
+       'exportiunivamalg #9','scholaramalgamalg #9'))	     or
+(i_category in ('Women','Music','Men')		  and i_class in
+('accessories','classical','fragrances','pants')	    and i_brand
+in ('amalgimporto #1','edu packscholar #1','exportiimporto #1',
+		   'importoamalg #1'))), months as (	 select
+d_date_sk, d_moy     from date_dim     where d_month_seq between 1200
+and 1211), monthly as (     -- the join with store only removed sales
+without a store     select i.i_manager_id, m.d_moy, sum(ss.ss_sal
+
+Plan hash value: 1306866883
+
+---------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation		  | Name	| Starts | E-Rows | A-Rows |   A-Time	| Buffers | Reads  |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	  |		|      1 |	  |    100 |00:00:00.33 |     127K|    122K|	   |	   |	      |
+|*  1 |  COUNT STOPKEY		  |		|      1 |	  |    100 |00:00:00.33 |     127K|    122K|	   |	   |	      |
+|   2 |   VIEW			  |		|      1 |    566 |    100 |00:00:00.33 |     127K|    122K|	   |	   |	      |
+|*  3 |    SORT ORDER BY STOPKEY  |		|      1 |    566 |    100 |00:00:00.33 |     127K|    122K|  9216 |  9216 | 8192  (0)|
+|*  4 |     VIEW		  |		|      1 |    566 |   1086 |00:00:00.33 |     127K|    122K|	   |	   |	      |
+|   5 |      WINDOW BUFFER	  |		|      1 |    566 |   1152 |00:00:00.33 |     127K|    122K| 52224 | 52224 |47104  (0)|
+|   6 |       SORT GROUP BY	  |		|      1 |    566 |   1152 |00:00:00.33 |     127K|    122K|   106K|   106K|96256  (0)|
+|*  7 |        HASH JOIN	  |		|      1 |  91143 |  61998 |00:00:00.31 |     127K|    122K|  1922K|  1922K| 1720K (0)|
+|*  8 | 	TABLE ACCESS FULL | DATE_DIM	|      1 |    396 |    366 |00:00:00.01 |    1382 |	 0 |	   |	   |	      |
+|*  9 | 	HASH JOIN	  |		|      1 |    439K|    355K|00:00:00.28 |     125K|    122K|  1995K|  1995K| 1450K (0)|
+|* 10 | 	 TABLE ACCESS FULL| ITEM	|      1 |   1925 |   1897 |00:00:00.02 |    2643 |	 0 |	   |	   |	      |
+|* 11 | 	 TABLE ACCESS FULL| STORE_SALES |      1 |   8250K|   8250K|00:00:00.20 |     122K|    122K|	   |	   |	      |
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(ROWNUM<=100)
+   3 - filter(ROWNUM<=100)
+   4 - filter(("AVG_MONTHLY_SALES">0 AND ABS("SUM_SALES"-"AVG_MONTHLY_SALES")>.1*"AVG_MONTHLY_SALES"))
+   7 - access("SS"."SS_SOLD_DATE_SK"="D_DATE_SK")
+   8 - filter(("D_MONTH_SEQ">=1200 AND "D_MONTH_SEQ"<=1211))
+   9 - access("SS"."SS_ITEM_SK"="I_ITEM_SK")
+  10 - filter(((INTERNAL_FUNCTION("I_CATEGORY") AND INTERNAL_FUNCTION("I_BRAND") AND INTERNAL_FUNCTION("I_CLASS")) OR
+	      (INTERNAL_FUNCTION("I_CATEGORY") AND INTERNAL_FUNCTION("I_BRAND") AND INTERNAL_FUNCTION("I_CLASS"))))
+  11 - filter("SS"."SS_STORE_SK" IS NOT NULL)
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

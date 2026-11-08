@@ -1,0 +1,80 @@
+Query 78 (optimized_2), SF3: 4.04s, OK
+
+===== Statement 1 =====
+
+SQL_ID	7hktpst2z6qj8, child number 0
+-------------------------------------
+/* plan q78 optimized_2 981897729 s1 */ WITH ws AS (	 SELECT d_year
+AS ws_sold_year, ws_item_sk,		ws_bill_customer_sk
+ws_customer_sk, 	   SUM(ws_quantity) ws_qty,
+SUM(ws_wholesale_cost) ws_wc,		 SUM(ws_sales_price) ws_sp
+FROM web_sales	   LEFT JOIN web_returns       ON wr_order_number =
+ws_order_number AND ws_item_sk = wr_item_sk	JOIN date_dim ON
+ws_sold_date_sk = d_date_sk	WHERE wr_order_number IS NULL	    AND
+d_year = 2000	  GROUP BY d_year, ws_item_sk, ws_bill_customer_sk ),
+cs AS (     SELECT d_year AS cs_sold_year, cs_item_sk,
+cs_bill_customer_sk cs_customer_sk,	       SUM(cs_quantity) cs_qty,
+	   SUM(cs_wholesale_cost) cs_wc,	    SUM(cs_sales_price)
+cs_sp	  FROM catalog_sales	 LEFT JOIN catalog_returns	 ON
+cr_order_number = cs_order_number AND cs_item_sk = cr_item_sk	  JOIN
+date_dim ON cs_sold_date_sk = d_date_sk     WHERE cr_order_number IS
+NULL	   AND d_year = 2000	 GROUP BY
+
+Plan hash value: 2564156503
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation		       | Name	       | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	       |	       |      1 |	 |    100 |00:00:04.03 |     275K|    306K|  40389 |	   |	   |	      | 	|
+|*  1 |  COUNT STOPKEY		       |	       |      1 |	 |    100 |00:00:04.03 |     275K|    306K|  40389 |	   |	   |	      | 	|
+|   2 |   VIEW			       |	       |      1 |      1 |    100 |00:00:04.03 |     275K|    306K|  40389 |	   |	   |	      | 	|
+|*  3 |    SORT ORDER BY STOPKEY       |	       |      1 |      1 |    100 |00:00:04.03 |     275K|    306K|  40389 | 15360 | 15360 |14336  (0)| 	|
+|*  4 |     FILTER		       |	       |      1 |	 |    483 |00:00:04.02 |     275K|    306K|  40389 |	   |	   |	      | 	|
+|   5 |      HASH GROUP BY	       |	       |      1 |      1 |   2617K|00:00:03.98 |     275K|    306K|  40389 |   708M|	15M|   75M (2)|     235M|
+|   6 |       VIEW		       |	       |      1 |   1147 |   2617K|00:00:02.36 |     275K|    275K|   9420 |	   |	   |	      | 	|
+|   7 |        UNION-ALL	       |	       |      1 |    469 |   2617K|00:00:02.36 |     275K|    275K|   9420 |	   |	   |	      | 	|
+|   8 | 	HASH GROUP BY	       |	       |      1 |      1 |   1456K|00:00:01.26 |     127K|    128K|   5535 |   179M|  9374K|   75M (1)|      47M|
+|*  9 | 	 FILTER 	       |	       |      1 |	 |   1456K|00:00:00.73 |     127K|    122K|	 0 |	   |	   |	      | 	|
+|* 10 | 	  HASH JOIN RIGHT OUTER|	       |      1 |   1419K|   1618K|00:00:00.71 |     127K|    122K|	 0 |	48M|  9892K|   53M (0)| 	|
+|  11 | 	   INDEX FAST FULL SCAN| SYS_C008753   |      1 |    862K|    862K|00:00:00.03 |    3306 |	0 |	 0 |	   |	   |	      | 	|
+|* 12 | 	   HASH JOIN	       |	       |      1 |   1581K|   1618K|00:00:00.50 |     124K|    122K|	 0 |  1922K|  1922K| 1703K (0)| 	|
+|* 13 | 	    TABLE ACCESS FULL  | DATE_DIM      |      1 |    366 |    366 |00:00:00.01 |    1382 |	0 |	 0 |	   |	   |	      | 	|
+|* 14 | 	    TABLE ACCESS FULL  | STORE_SALES   |      1 |   8250K|   8250K|00:00:00.42 |     122K|    122K|	 0 |	   |	   |	      | 	|
+|  15 | 	HASH GROUP BY	       |	       |      1 |     41 |    390K|00:00:00.33 |   49674 |  48412 |    960 |	49M|  4687K|   35M (1)|    8192K|
+|* 16 | 	 FILTER 	       |	       |      1 |	 |    390K|00:00:00.23 |   49674 |  47452 |	 0 |	   |	   |	      | 	|
+|* 17 | 	  HASH JOIN OUTER      |	       |      1 |   8497 |    433K|00:00:00.22 |   49674 |  47452 |	 0 |	35M|  6377K|   40M (0)| 	|
+|* 18 | 	   HASH JOIN	       |	       |      1 |    433K|    433K|00:00:00.11 |   48844 |  47452 |	 0 |  1922K|  1922K| 1700K (0)| 	|
+|* 19 | 	    TABLE ACCESS FULL  | DATE_DIM      |      1 |    366 |    366 |00:00:00.01 |    1382 |	0 |	 0 |	   |	   |	      | 	|
+|* 20 | 	    TABLE ACCESS FULL  | WEB_SALES     |      1 |   2159K|   2159K|00:00:00.09 |   47462 |  47452 |	 0 |	   |	   |	      | 	|
+|  21 | 	   INDEX FAST FULL SCAN| SYS_C008774   |      1 |    215K|    215K|00:00:00.01 |     830 |	0 |	 0 |	   |	   |	      | 	|
+|  22 | 	HASH GROUP BY	       |	       |      1 |   1105 |    771K|00:00:00.78 |   98298 |  98191 |   2925 |	97M|  9374K|   40M (1)|      25M|
+|* 23 | 	 FILTER 	       |	       |      1 |	 |    771K|00:00:00.52 |   98298 |  95266 |	 0 |	   |	   |	      | 	|
+|* 24 | 	  HASH JOIN OUTER      |	       |      1 |   8525 |    857K|00:00:00.49 |   98298 |  95266 |	 0 |	66M|  6377K|   77M (0)| 	|
+|* 25 | 	   HASH JOIN	       |	       |      1 |    852K|    857K|00:00:00.27 |   96660 |  95266 |	 0 |  1922K|  1922K| 1704K (0)| 	|
+|* 26 | 	    TABLE ACCESS FULL  | DATE_DIM      |      1 |    366 |    366 |00:00:00.01 |    1382 |	0 |	 0 |	   |	   |	      | 	|
+|* 27 | 	    TABLE ACCESS FULL  | CATALOG_SALES |      1 |   4297K|   4297K|00:00:00.23 |   95278 |  95266 |	 0 |	   |	   |	      | 	|
+|  28 | 	   INDEX FAST FULL SCAN| SYS_C008771   |      1 |    432K|    432K|00:00:00.02 |    1638 |	0 |	 0 |	   |	   |	      | 	|
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(ROWNUM<=100)
+   3 - filter(ROWNUM<=100)
+   4 - filter((MAX(CASE  WHEN "CHANNEL"='S' THEN 1 ELSE 0 END )=1 AND (COALESCE(MAX(CASE  WHEN "CHANNEL"='W' THEN "QTY" END ),0)>0 OR COALESCE(MAX(CASE
+	      WHEN "CHANNEL"='C' THEN "QTY" END ),0)>0)))
+   9 - filter("STORE_RETURNS"."SR_TICKET_NUMBER" IS NULL)
+  10 - access("SR_TICKET_NUMBER"="SS_TICKET_NUMBER" AND "SS_ITEM_SK"="SR_ITEM_SK")
+  12 - access("STORE_SALES"."SS_SOLD_DATE_SK"="D_DATE_SK")
+  13 - filter("DATE_DIM"."D_YEAR"=2000)
+  14 - filter("STORE_SALES"."SS_CUSTOMER_SK" IS NOT NULL)
+  16 - filter("WEB_RETURNS"."WR_ORDER_NUMBER" IS NULL)
+  17 - access("WR_ORDER_NUMBER"="WS_ORDER_NUMBER" AND "WS_ITEM_SK"="WR_ITEM_SK")
+  18 - access("WEB_SALES"."WS_SOLD_DATE_SK"="D_DATE_SK")
+  19 - filter("DATE_DIM"."D_YEAR"=2000)
+  20 - filter("WEB_SALES"."WS_BILL_CUSTOMER_SK" IS NOT NULL)
+  23 - filter("CATALOG_RETURNS"."CR_ORDER_NUMBER" IS NULL)
+  24 - access("CR_ORDER_NUMBER"="CS_ORDER_NUMBER" AND "CS_ITEM_SK"="CR_ITEM_SK")
+  25 - access("CATALOG_SALES"."CS_SOLD_DATE_SK"="D_DATE_SK")
+  26 - filter("DATE_DIM"."D_YEAR"=2000)
+  27 - filter("CATALOG_SALES"."CS_BILL_CUSTOMER_SK" IS NOT NULL)
